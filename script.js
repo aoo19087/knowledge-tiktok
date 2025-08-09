@@ -136,7 +136,7 @@ function sendFeedback() {
     return;
   }
   // 開発者のメールアドレス（必要に応じて変更してください）
-  const developerEmail = 'example@example.com';
+  const developerEmail = 'ryouga20011225@icloud.com';
   const subject = encodeURIComponent('雑学サイトへのフィードバック');
   const body = encodeURIComponent(message);
   const mailtoLink = `mailto:${developerEmail}?subject=${subject}&body=${body}`;
