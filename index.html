@@ -3,13 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>知識のTikTok</title>
+  <!-- サイトタイトルを更新 -->
+  <title>雑学</title>
   <!-- Link to the stylesheet for styling -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Container where all of the knowledge cards will be injected -->
-  <div id="cards-container"></div>
+  <!-- 単一のカードを描画するためのコンテナ -->
+  <div id="card-container"></div>
+
+  <!-- 匿名フィードバック欄 -->
+  <section id="feedback-section">
+    <h3>ご意見・ご感想</h3>
+    <p>「ここをこうして」とかアドバイスはありますか？匿名で送信できます。</p>
+    <textarea id="feedback-input" rows="4" cols="50" placeholder="ご自由に入力してください…"></textarea>
+    <br />
+    <button id="feedback-submit">送信</button>
+  </section>
 
   <!-- JavaScript file that loads the data and constructs the cards -->
   <script src="script.js"></script>

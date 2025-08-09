@@ -1,8 +1,15 @@
 /*
- * The data for the knowledge cards is embedded directly in this script to avoid
- * cross‑origin issues when loading via the file:// protocol. Each entry
- * contains a Japanese question and its corresponding answer.
+ * 雑学サイトのフロントエンドロジック。
+ *
+ * このスクリプトでは、1枚ずつカードを表示し、
+ *   - 「答えを見る」ボタンで答えの表示/非表示の切り替え
+ *   - 「もっと知る」ボタンでランダムに関連する雑学をレコメンド
+ *   - 「次は◯◯に関する知識」リンクで次のカードへ移動
+ *   - 匿名フィードバックをメールで送信
+ * ができるようにしています。
  */
+
+// 雑学カードのデータ。各オブジェクトに質問と回答を格納する。
 const knowledgeCards = [
   { question: 'なぜ猫は喉を鳴らすのか？', answer: 'リラックスや安心、甘えたいとき、時には痛みや不安を和らげるためにも鳴らす。' },
   { question: 'コーヒーを飲むベストな時間は？', answer: '朝起きてすぐではなく、起きて90分後〜午前中が効果的。' },
@@ -22,7 +29,7 @@ const knowledgeCards = [
   { question: '「青いバラ」は本当にあるの？', answer: '自然界にはないが、遺伝子操作や染色で作られた。' },
   { question: '世界一小さい哺乳類は？', answer: 'トウキョウトガリネズミやキクガシラコウモリ（体重2g前後）。' },
   { question: '飛行機の窓が丸い理由は？', answer: '四角いと角に圧力が集中して壊れやすくなるから。' },
-  { question: 'なぜ満月は大きく見えるときがあるの？', answer: '地平線近くでは錯覚で大きく見える『月の錯視』。' },
+  { question: 'なぜ満月は大きく見えるときがあるの？', answer: '地平線近くでは錯覚で大きく見える「月の錯視」。' },
   { question: 'パンダが白黒なのはなぜ？', answer: '雪や森でカモフラージュしつつ、仲間との認識もしやすくするため。' },
   { question: '宇宙飛行士が宇宙で泣くとどうなる？', answer: '涙が頬を流れず、目の表面に球状にたまる。' },
   { question: '実は食べられる花って？', answer: 'ナスタチウム、ビオラ、バラなどが食用になる。' },
@@ -33,42 +40,118 @@ const knowledgeCards = [
   { question: '世界一大きい雪の結晶のサイズは？', answer: '直径38cm（アメリカ、1887年記録）。' },
   { question: '人間の骨はどれくらい強いの？', answer: '同じ重量の鉄よりも強い。' },
   { question: '世界一長い単語は？', answer: 'タンパク質の化学名で、19万文字以上。' },
-  { question: '昔は『トマトは毒』と信じられていた？', answer: 'ヨーロッパではナス科＝毒のイメージがあったから。' }
+  { question: '昔は「トマトは毒」と信じられていた？', answer: 'ヨーロッパではナス科＝毒のイメージがあったから。' }
 ];
 
-// Shuffle the cards to randomize the order on each load
-knowledgeCards.sort(() => Math.random() - 0.5);
+// 現在表示しているカードのインデックス
+let currentIndex = 0;
 
-// Reference to the container element
-const container = document.getElementById('cards-container');
-
-// Iterate through each card and build the DOM structure
-knowledgeCards.forEach((card) => {
+/**
+ * 指定したインデックスのカードを描画する関数。
+ * @param {number} index 表示するカードのインデックス
+ */
+function renderCard(index) {
+  const container = document.getElementById('card-container');
+  container.innerHTML = '';
+  const card = knowledgeCards[index];
+  // カード全体のラッパー
   const section = document.createElement('div');
   section.className = 'card';
-
-  // Random pastel background using HSL; using lightness to keep it soft
+  // ランダムなパステル背景色を設定
   const hue = Math.floor(Math.random() * 360);
   section.style.backgroundColor = `hsl(${hue}, 70%, 93%)`;
-
+  // 質問
   const questionEl = document.createElement('h2');
   questionEl.textContent = card.question;
-
-  const toggleButton = document.createElement('button');
-  toggleButton.textContent = '答えを見る';
-
+  // 答え（非表示にしておく）
   const answerEl = document.createElement('p');
   answerEl.className = 'answer';
   answerEl.textContent = card.answer;
-
+  answerEl.style.display = 'none';
+  // 答えを見るボタン
+  const toggleButton = document.createElement('button');
+  toggleButton.textContent = '答えを見る';
   toggleButton.addEventListener('click', () => {
     const visible = answerEl.style.display === 'block';
     answerEl.style.display = visible ? 'none' : 'block';
     toggleButton.textContent = visible ? '答えを見る' : '隠す';
   });
-
+  // もっと知るボタン（AIレコメンド風）
+  const moreButton = document.createElement('button');
+  moreButton.textContent = 'もっと知る';
+  moreButton.style.marginLeft = '8px';
+  moreButton.addEventListener('click', () => {
+    const recIndex = getRandomIndex(currentIndex);
+    const rec = knowledgeCards[recIndex];
+    // 簡易的にアラートで関連知識を提示
+    alert(`おすすめ: ${rec.question}\n${rec.answer}`);
+  });
+  // 次へリンク
+  const nextIndex = (index + 1) % knowledgeCards.length;
+  const nextLink = document.createElement('a');
+  nextLink.href = '#';
+  nextLink.textContent = `次は「${knowledgeCards[nextIndex].question}」に関する知識`;
+  nextLink.style.display = 'block';
+  nextLink.style.marginTop = '1rem';
+  nextLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    currentIndex = nextIndex;
+    renderCard(currentIndex);
+    // ページ上部へスクロール
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  // 要素を組み立て
   section.appendChild(questionEl);
-  section.appendChild(toggleButton);
+  // ボタンコンテナを使って横並びに配置
+  const buttonWrapper = document.createElement('div');
+  buttonWrapper.appendChild(toggleButton);
+  buttonWrapper.appendChild(moreButton);
+  section.appendChild(buttonWrapper);
   section.appendChild(answerEl);
+  section.appendChild(nextLink);
   container.appendChild(section);
+}
+
+/**
+ * 現在のインデックスを除いてランダムなインデックスを返す。
+ * @param {number} exclude 除外するインデックス
+ * @returns {number} ランダムなインデックス
+ */
+function getRandomIndex(exclude) {
+  let idx;
+  do {
+    idx = Math.floor(Math.random() * knowledgeCards.length);
+  } while (idx === exclude && knowledgeCards.length > 1);
+  return idx;
+}
+
+/**
+ * フィードバック送信処理。ユーザーのメッセージをメールクライアントに渡す。
+ */
+function sendFeedback() {
+  const textarea = document.getElementById('feedback-input');
+  const message = textarea.value.trim();
+  if (message.length === 0) {
+    alert('フィードバックを入力してください。');
+    return;
+  }
+  // 開発者のメールアドレス（必要に応じて変更してください）
+  const developerEmail = 'example@example.com';
+  const subject = encodeURIComponent('雑学サイトへのフィードバック');
+  const body = encodeURIComponent(message);
+  const mailtoLink = `mailto:${developerEmail}?subject=${subject}&body=${body}`;
+  // ユーザーのデフォルトメールクライアントで送信
+  window.location.href = mailtoLink;
+  // 入力欄をクリア
+  textarea.value = '';
+  alert('フィードバックありがとうございます！');
+}
+
+// 初期化処理
+window.addEventListener('DOMContentLoaded', () => {
+  // 最初のカードを表示
+  renderCard(currentIndex);
+  // フィードバック送信ボタンのリスナーを設定
+  const fbBtn = document.getElementById('feedback-submit');
+  fbBtn.addEventListener('click', sendFeedback);
 });
